@@ -1,0 +1,63 @@
+version: '3.3'
+services:
+  grafana:
+    container_name: grafana
+    hostname: grafana
+    image: grafana/grafana-enterprise
+    ports:
+      - '13000:3000'
+    environment:
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_ALLOW_ORG_CREATE=false
+      - GF_USERS_AUTO_ASSIGN_ORG_ROLE=Read Only Editor
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel,marcusolsson-gantt-panel,grafana-worldmap-panel,briangann-gauge-panel,natel-plotly-panel,grafana-clickhouse-datasource
+    depends_on:
+      - postgres-main
+    volumes:
+      #       - ./data/grafana/logs:/var/log/grafana
+      #       - ./data/grafana/provisioning:/etc/grafana/provisioning
+      #       - ./data/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/dashboard/grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/data/grafana/plugins:/var/lib/grafana/plugins
+      - ./grafana/data/grafana/data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - data
+
+  postgres-main:
+    container_name: "postgres-main"
+    image: postgres:16-alpine
+    hostname: postgres-main
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: test_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-main/data:/var/lib/postgresql/data
+      # - ./data/postgres_main/logs:/var/log/postgresql
+    networks:
+      - data
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres-main
+    networks:
+      - data
+#volumes:
+#  postgres-main:
+#  dashboard/grafana/provisioning:
+#  data/grafana/plugins:
+#  data/grafana/data:
+
+networks:
+  data:
